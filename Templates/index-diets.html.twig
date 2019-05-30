@@ -1,0 +1,288 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Diety{% endblock %}
+
+{% block breadcrumbs %}
+    <span class="basic-info__breadcrumbs-name">Diety</span>
+{% endblock breadcrumbs %}
+
+
+{% block basic_info %}
+    <span class="basic-info__name">Diety</span>
+
+    {% if is_granted('DIET_ADD')  %}
+        <a href="{{ path('diet_add') }}">
+            <button class="basic-info__add-btn"><i class="fe fe-plus-square mr-2"></i>Dodaj dietę</button>
+        </a>
+    {% endif %}
+
+{% endblock basic_info %}
+
+
+{% block content %}
+    <div class="content__columns content--separated content--rounded" id="table-component">
+        <table-component :conf='conf' class="shadow-sm round-top round-bottom"></table-component>
+        <dependent-table
+            :is_granted_menu_add = "{{ is_granted('MENU_ADD') ? 1 : 0}}"
+            :is_granted_menu_edit = "{{ is_granted('MENU_EDIT') ? 1 : 0}}"
+            :is_granted_menu_show = "{{ is_granted('MENU_SHOW') ? 1 : 0}}"
+            :is_granted_menu_pdf = "{{ is_granted('MENU_PDF') ? 1 : 0}}"
+            :conf='dependentTableConf' class="shadow-sm round-bottom mt-5 mt-xl-0"
+            >
+        </dependent-table>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+    <script>
+        let tableNameDiets = 'diets';
+        let contextDiets = '?context=dietGrid';
+        let tableNameMenu = 'menus';
+        let contextMenu = "?context=menuGrid";
+
+        new Vue({
+            components: {
+                'table-component': Table,
+                'dependent-table': DependentTable
+            },
+            delimiters: ['${', '}'],
+            data: {
+                conf: {
+                    "urlAPI": "/api/" + tableNameDiets + contextDiets,
+                    "tableName": tableNameDiets,
+                    "context": contextDiets,
+                    "exportToExcel": false,
+                    "stateManager": {
+                        "saveFilter": true,
+                        "saveSorting": true,
+                        "saveClickedRow": false
+                    },
+                    "columns": {
+                        "uuid": {
+                            "areShown": false,
+                            "label": "UUID",
+                            "order":true,
+                            "search": true
+                        },
+                        "name": {
+                            "areShown": true,
+                            "label": "Nazwa diety",
+                            "order":true,
+                            "search": true
+                        },
+                        "color": {
+                            "areShown": true,
+                            "label": "Kolor",
+                            "order": false,
+                            "search": false,
+                            'fun': function (data) {
+                                let output = '';
+                                if (data.color) {
+                                    output = `<div class=\'rounded-circle\' style=\'border:1px solid #ccc; height:14px; width:14px; background:`+data.color+`\'></div>`;
+                                } else {
+                                    output = "Brak";
+                                }
+                                return output;
+                            }
+                        },
+                        "shortcut": {
+                            "areShown": true,
+                            "label": "Skrót",
+                            "order":true,
+                            "search": true
+                        },
+                        "isSpecial": {
+                            "areShown": true,
+                            "label": "Typ diety",
+                            "order":true,
+                            "search": true,
+                            "type": "select",
+                            "options": ["Specjalna","Standardowa"],
+                            'fun': function (data) {
+                                let output = '';
+                                if (data.isSpecial == false) {
+                                    output = 'Standardowa';
+                                } else {
+                                    output = "Specjalna";
+                                }
+                                return output;
+                            }
+                        },
+                        "isActive": {
+                            "areShown": true,
+                            "label": "Status",
+                            "order":true,
+                            "search": true,
+                            "type": "select",
+                            "options":["Aktywna","Nieaktywna"],
+                            'fun': function (data) {
+                                let output = '';
+                                if (data.isActive == true) {
+                                    output = `<span class="text-success">${this.options[0]}</span>`;
+                                } else {
+                                    output = `<span class="text-primary">${this.options[1]}</span>`;
+                                }
+                                return output;
+                            }
+                        },
+                        "actions": {
+                            "areShown": true,
+                            "label": "Akcje"
+                        }
+                    },
+                    "actions": [
+                        {
+                            "type": "show",
+                            "text": "Pokaż",
+                            "url": "/app/" + tableNameDiets + "/show/{uuid}"
+                        },
+                        {% if is_granted('DIET_EDIT')  %}
+                        {
+                            "type": "edit",
+                            "text": "Edytuj",
+                            "url": "/app/" + tableNameDiets + "/edit/{uuid}"
+                        }
+                        {% endif %}
+                    ]
+                },
+                dependentTableConf: {
+                    "urlAPI": "/api/" + tableNameMenu + contextMenu + "&diet.uuid=",
+                    "tableName": "diets-dependent-table",
+                    "exportToExcel": false,
+                    "stateManager": {
+                        "saveFilter": false,
+                        "saveSorting": false,
+                        "saveClickedRow": false
+                    },
+                    "columns": {
+                        "id": {
+                            "areShown": false,
+                            "label": "ID",
+                            "order":true,
+                            "search": true
+                        },
+                        "uuid": {
+                            "areShown": false,
+                            "label": "UUID",
+                            "order":true,
+                            "search": true
+                        },
+                        "name": {
+                            "areShown": true,
+                            "label": "Nazwa jadłospisu",
+                            "order":true,
+                            "search": true
+                        },
+                        "dateFrom": {
+                            "areShown": true,
+                            "label": "Obowiązuje od",
+                            "order":true,
+                            "search": true,
+                            'fun': function (data) {
+                                return data.dateFrom ? data.dateFrom.substring(0, 10) : null;
+                            }
+                        },
+                        "state.name": {
+                            "areShown":true,
+                            "label": "Stan",
+                            "order":true,
+                            "search": true
+                        },
+                        "isActive": {
+                            "areShown": true,
+                            "label": "Status",
+                            "order":true,
+                            "search": true,
+                            "options":["Opublikowany", "Szkic"],
+                            "type": "select",
+                            'fun': function (data) {
+                                let output = '';
+                                if (data.isActive == true) {
+                                    output = `<span class="text-success">${this.options[0]}</span>`;
+                                } else {
+                                    output = `<span class="text-primary">${this.options[1]}</span>`;
+                                }
+                                return output;
+                            }
+                        },
+                        "diet.uuid": {
+                            "areShown": false,
+                            "label": "Diet UUID",
+                            "order":true,
+                            "search": true
+                        },
+                        "actions": {
+                            "areShown": true,
+                            "label": "Akcje",
+                        }
+                    },
+                    "actions": [
+                        {% if is_granted('MENU_PDF')  %}
+                            {
+                                "type": "file",
+                                "text": "Pobierz PDF",
+                                "url": "/app/diets/{diet.uuid}/menu/pdf/{uuid}"
+                            },
+                        {% endif %}
+
+                        {% if is_granted('MENU_SHOW')  %}
+                            {
+                                "type": "show",
+                                "text": "Pokaż",
+                                "url": "/app/diets/{diet.uuid}/menu/edit/{uuid}",
+                            },
+                        {% endif %}
+
+                        {% if is_granted('MENU_CLONE')  %}
+                            {
+                                "type": "clone",
+                                "text": "Klonuj",
+                                "url": "/app/diets/{diet.uuid}/menu/clone/{uuid}"
+                            },
+                        {% endif %}
+
+                        {% if is_granted('MENU_EDIT')  %}
+                            {
+                                "type": "edit",
+                                "text": "Edytuj",
+                                "url": "/app/diets/{diet.uuid}/menu/edit/{uuid}",
+                                "fun":function(rowObject) {
+                                    return rowObject.isActive !== true;
+                                }
+                            },
+                        {% endif %}
+
+                        {% if is_granted('MENU_DELETE') %}
+                        {
+                            "type": "delete",
+                            //"deleteMessage": "any message to show in confirm modal",
+                            "text": 'Usuń',
+                            "url": "/app/diets/{diet.uuid}/menu/delete/{uuid}",
+                            "fun": function (rowObject) {
+                                if (rowObject.isActive !== null) {
+                                    if (rowObject.isActive == false) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                        }
+                        {% endif %}
+                    ]
+                }
+            },
+            created(){
+                if(this.conf.actions != undefined){ this.conf.actions.length >0 ? null : this.conf.columns.actions.areShown = false; };
+                if(this.dependentTableConf.actions != undefined){ this.dependentTableConf.actions.length >0 ? null : this.dependentTableConf.columns.actions.areShown = false};
+            },
+            el: '#table-component'
+        });
+
+
+    </script>
+{% endblock javascripts %}
+
+

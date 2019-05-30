@@ -1,0 +1,140 @@
+{% extends "base.html.twig" %}
+
+{% block title %}Receptury{% endblock %}
+
+{% block breadcrumbs %}
+    <span class="basic-info__breadcrumbs-name">Receptury</span>
+{% endblock breadcrumbs %}
+
+
+{% block basic_info %}
+    <span class="basic-info__name">Receptury</span>
+
+    {% if is_granted('RECIPE_ADD') %}
+        <a href="{{ path('recipe_add') }}">
+            <button class="basic-info__add-btn"><i class="fe fe-plus-square mr-2"></i>Dodaj recepturę</button>
+        </a>
+    {% endif %}
+
+{% endblock basic_info %}
+
+
+{% block content %}
+    <div class="content__columns content--rounded" id="table-component">
+        <table-component :conf='conf' class="shadow-sm round-top round-bottom"></table-component>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        let tableName = 'recipes';
+        let context = '?context=recipeGrid';
+
+        new Vue({
+            components: {
+                'table-component': Table
+            },
+            delimiters: ['${', '}'],
+            data: {
+                conf: {
+                    "urlAPI": "/api/" + tableName + context,
+                    "tableName": tableName,
+                    "context": context,
+                    "exportToExcel": false,
+                    "stateManager": {
+                        "saveFilter": true,
+                        "saveSorting": true,
+                        "saveClickedRow": false
+                    },
+                    "columns": {
+                        "uuid": {
+                            "areShown": false,
+                            "label": "UUID",
+                        },
+                        "name": {
+                            "areShown": true,
+                            "label": "Nazwa",
+                            "order":true,
+                            "search": true
+                        },
+                        "recipeGroup.name": {
+                            "areShown": true,
+                            "label": "Grupa",
+                            "order":true,
+                            "search": true
+                        },
+                        "tags": {
+                            "areShown": true,
+                            "label": "Tagi",
+                            "order":true,
+                            "search": true
+                        },
+                        "isActive": {
+                            "areShown": true,
+                            "label": "Status",
+                            "order":true,
+                            "search": true,
+                            "options": ["Aktywna", "Nieaktywna"],
+                            "type": "select",
+                            'fun': function (data) {
+                                let output = '';
+                                if (data.isActive == true) {
+                                    output = `<span class="text-success">${this.options[0]}</span>`;
+                                } else {
+                                    output = `<span class="text-primary">${this.options[1]}</span>`;
+                                }
+                                return output;
+                            }
+                        },
+                        "actions": {
+                            "areShown": true,
+                            "label": "Akcje"
+                        }
+                    },
+                    "actions": [
+                        {% if is_granted('RECIPE_SHOW') %}
+                            {
+                                "type": "show",
+                                "text": "Pokaż",
+                                "url": "/app/" + tableName + "/show/{uuid}"
+                            },
+                        {% endif %}
+
+                        {% if is_granted('RECIPE_EDIT') %}
+                            {
+                                "type": "edit",
+                                "text": "Edytuj",
+                                "url": "/app/" + tableName + "/edit/{uuid}"
+                            },
+                        {% endif %}
+
+                        {% if is_granted('RECIPE_DELETE') %}
+                        {
+                            "type": "delete",
+                            //"deleteMessage": "any message to show in confirm modal",
+                            "text": 'Usuń',
+                            "url": "/app/" + tableName + "/delete/{uuid}",
+                            "fun": function (rowObject) {
+                                if (rowObject.isActive !== null) {
+                                    if (rowObject.isActive == false) {
+                                        return true;
+                                    } else {
+                                        return false;
+                                    }
+                                } else {
+                                    return false;
+                                }
+                            }
+                        }
+                        {% endif %}
+                    ]
+                }
+            },
+            created(){
+                if(this.conf.actions != undefined){ this.conf.actions.length >0 ? null : this.conf.columns.actions.areShown = false; };
+            },
+            el: '#table-component',
+        });
+
+    </script>
+{% endblock javascripts %}
