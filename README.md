@@ -6,4 +6,4 @@ What's possible in this table ?
 * search and sort simultaneously 
 * set a pagination
 * save either search keys or sort (desc/asc) to sessionStorage or even save'em both
-* configure table from the outside, choosing what exactly to show, pass html to table's rows, configure actions and many more
+* configure table from the outside, choosing what exactly to show, pass html to table's rows, configure actions and much more
